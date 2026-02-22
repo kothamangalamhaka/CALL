@@ -1,170 +1,150 @@
 <!DOCTYPE html>
 <html lang="ml">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Malayalam Voice Call App</title>
-    
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background-color: #e5ddd5; margin: 0; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; width: 320px; }
-        h2 { color: #075e54; margin-top: 0; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 5px; transition: 0.2s; }
-        .btn-primary { background-color: #25d366; color: white; }
-        .btn-danger { background-color: #ef4444; color: white; display: none; }
-        .btn-logout { background-color: #f3f4f6; color: #555; font-size: 12px; margin-top: 20px; }
-        #call-interface { display: none; }
-        .status { margin-top: 15px; font-size: 14px; color: #666; font-weight: 500; }
-        .my-id-tag { background: #dcf8c6; padding: 5px 10px; border-radius: 5px; color: #075e54; font-weight: bold; }
-    </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Private Voice Caller</title>
+ <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+ <style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f4f7f6; margin: 0; }
+  .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; }
+  h2 { color: #333; margin-bottom: 20px; }
+  input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; outline: none; transition: 0.3s; }
+  input:focus { border-color: #007bff; }
+  button { width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; margin-top: 10px; }
+  .btn-set { background-color: #007bff; color: white; }
+  .btn-call { background-color: #28a745; color: white; }
+  .btn-hangup { background-color: #dc3545; color: white; display: none; }
+  #my-id-display { font-weight: bold; color: #007bff; background: #e7f3ff; padding: 8px; border-radius: 5px; display: inline-block; margin-top: 10px; }
+  .status { margin-top: 20px; color: #666; font-size: 14px; font-style: italic; }
+  #call-section { display: none; }
+ </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Voice Call</h2>
+ <h2>Voice Caller</h2>
 
-    <div id="login-interface">
-        <p>തുടങ്ങാൻ നിങ്ങളുടെ ഒരു പേര് നൽകുക</p>
-        <input type="text" id="my-id-input" placeholder="ഉദാഹരണത്തിന്: shafi123">
-        <button class="btn-primary" onclick="initPeer(true)">കണക്ട് ചെയ്യുക</button>
-    </div>
+ <div id="setup-section">
+  <input type="text" id="custom-id-input" placeholder="നിങ്ങളുടെ പേര് നൽകുക (e.g. shafi123)">
+  <button class="btn-set" onclick="setCustomID()">ID സെറ്റ് ചെയ്യുക</button>
+ </div>
 
-    <div id="call-interface">
-        <p>നിങ്ങളുടെ ID: <span id="display-id" class="my-id-tag">...</span></p>
-        <hr style="border: 0.5px solid #eee; margin: 20px 0;">
-        <input type="text" id="remote-id-input" placeholder="വിളിക്കേണ്ടയാളുടെ ID">
-        <button id="btn-call" class="btn-primary" onclick="makeCall()">വിളിക്കുക (Call)</button>
-        <button id="btn-hangup" class="btn-danger" onclick="hangUp()">കട്ട് ചെയ്യുക (End)</button>
-        
-        <button class="btn-logout" onclick="logout()">വേറെ ID ഉപയോഗിക്കണോ? (Logout)</button>
-    </div>
+ <div id="call-section">
+  <p>നിങ്ങളുടെ ID: <span id="my-id-display">...</span></p>
+  <hr>
+  <input type="text" id="remote-id-input" placeholder="വിളിക്കേണ്ടയാളുടെ ID നൽകുക">
+  <button id="btn-call" class="btn-call" onclick="makeCall()">വിളിക്കുക (Call)</button>
+  <button id="btn-hangup" class="btn-hangup" onclick="hangUp()">കട്ട് ചെയ്യുക (End)</button>
+ </div>
 
-    <div id="status" class="status">ലോഡിംഗ്...</div>
+ <div id="status" class="status">തുടങ്ങാൻ ഒരു ID നൽകുക</div>
 </div>
 
 <audio id="remote-audio" autoplay></audio>
 
 <script>
-    let peer = null;
-    let currentCall = null;
-    let localStream = null;
+ let peer = null;
+ let currentCall = null;
 
-    const statusMsg = document.getElementById('status');
-    const loginUI = document.getElementById('login-interface');
-    const callUI = document.getElementById('call-interface');
+ const statusDisplay = document.getElementById('status');
+ const setupSection = document.getElementById('setup-section');
+ const callSection = document.getElementById('call-section');
+ const myIdDisplay = document.getElementById('my-id-display');
+ const btnCall = document.getElementById('btn-call');
+ const btnHangup = document.getElementById('btn-hangup');
 
-    // പേജ് തുറക്കുമ്പോൾ തന്നെ പഴയ ലോഗിൻ ഉണ്ടോ എന്ന് നോക്കുന്നു
-    window.onload = () => {
-        const savedId = localStorage.getItem('saved_peer_id');
-        if (savedId) {
-            document.getElementById('my-id-input').value = savedId;
-            initPeer(false); 
-        } else {
-            statusMsg.innerText = "ലോഗിൻ ചെയ്യുക";
-        }
-    };
+ // 1. Custom ID സെറ്റ് ചെയ്യുന്ന ഫംഗ്ഷൻ
+ function setCustomID() {
+  const customId = document.getElementById('custom-id-input').value.trim();
+  if (!customId) {
+   alert("ദയവായി ഒരു ID നൽകുക!");
+   return;
+  }
 
-    // PeerJS കണക്ഷൻ തുടങ്ങുന്നു
-    function initPeer(isNewLogin) {
-        const id = document.getElementById('my-id-input').value.trim();
-        if (!id) { alert("ID നൽകുക!"); return; }
+  // PeerJS കണക്ഷൻ കോൺഫിഗറേഷൻ
+  peer = new Peer(customId, {
+   config: {
+    'iceServers': [
+     { url: 'stun:stun.l.google.com:19302' },
+     { url: 'stun:stun1.l.google.com:19302' },
+     { url: 'stun:stun2.l.google.com:19302' }
+    ]
+   }
+  });
 
-        statusMsg.innerText = "കണക്ട് ആകുന്നു...";
+  peer.on('open', (id) => {
+   myIdDisplay.innerText = id;
+   setupSection.style.display = 'none';
+   callSection.style.display = 'block';
+   statusDisplay.innerText = "വിളിക്കാൻ തയ്യാറാണ്...";
+  });
 
-        // PeerJS കോൺഫിഗറേഷൻ
-        peer = new Peer(id, {
-            config: {
-                'iceServers': [
-                    { url: 'stun:stun.l.google.com:19302' },
-                    { url: 'stun:stun1.l.google.com:19302' }
-                ]
-            }
-        });
+  peer.on('error', (err) => {
+   if (err.type === 'unavailable-id') {
+    alert("ഈ ID നിലവിൽ ഉപയോഗത്തിലാണ്. വേറെ ഒന്ന് പരീക്ഷിക്കൂ.");
+   } else {
+    alert("Error: " + err.type);
+   }
+  });
 
-        peer.on('open', (myId) => {
-            localStorage.setItem('saved_peer_id', myId); // ID ഫോണിൽ സേവ് ചെയ്യുന്നു
-            loginUI.style.display = 'none';
-            callUI.style.display = 'block';
-            document.getElementById('display-id').innerText = myId;
-            statusMsg.innerText = "ഓൺലൈൻ ആണ്...";
-        });
+  // ഇൻകമിംഗ് കോൾ വരുമ്പോൾ
+  peer.on('call', (call) => {
+   if (confirm("ഒരു കോൾ വരുന്നു. സ്വീകരിക്കണോ?")) {
+    statusDisplay.innerText = "കോൾ കണക്ട് ആകുന്നു...";
+    navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then((stream) => {
+     call.answer(stream);
+     handleCall(call);
+    });
+   }
+  });
+ }
 
-        peer.on('error', (err) => {
-            if (err.type === 'unavailable-id') {
-                alert("ഈ ID വേറെ ആരോ ഉപയോഗിക്കുന്നു!");
-                logout();
-            } else {
-                statusMsg.innerText = "Error: " + err.type;
-            }
-        });
+ // 2. കോൾ വിളിക്കാനുള്ള ഫംഗ്ഷൻ
+ function makeCall() {
+  const remoteId = document.getElementById('remote-id-input').value.trim();
+  if (!remoteId) {
+   alert("വിളിക്കേണ്ടയാളുടെ ID നൽകുക!");
+   return;
+  }
 
-        // ഇൻകമിംഗ് കോൾ വരുമ്പോൾ (IMO പോലെ)
-        peer.on('call', (call) => {
-            if (confirm(call.peer + " വിളിക്കുന്നു. എടുക്കണോ?")) {
-                navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-                    localStream = stream;
-                    call.answer(stream);
-                    handleCall(call);
-                });
-            }
-        });
-    }
+  statusDisplay.innerText = "വിളിക്കുന്നു...";
+  navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then((stream) => {
+   const call = peer.call(remoteId, stream);
+   handleCall(call);
+  }).catch(err => {
+   alert("മൈക്രോഫോൺ പെർമിഷൻ ആവശ്യമാണ്!");
+  });
+ }
 
-    // കോൾ വിളിക്കാൻ
-    function makeCall() {
-        const remoteId = document.getElementById('remote-id-input').value.trim();
-        if (!remoteId) { alert("ആരെയാണ് വിളിക്കേണ്ടത്?"); return; }
+ // 3. കോൾ ഹാൻഡിൽ ചെയ്യുന്ന ഫംഗ്ഷൻ
+ function handleCall(call) {
+  currentCall = call;
+  btnCall.style.display = 'none';
+  btnHangup.style.display = 'block';
 
-        statusMsg.innerText = "വിളിക്കുന്നു...";
-        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-            localStream = stream;
-            const call = peer.call(remoteId, stream);
-            handleCall(call);
-        }).catch(err => {
-            alert("മൈക്രോഫോൺ പെർമിഷൻ നൽകണം!");
-        });
-    }
+  call.on('stream', (remoteStream) => {
+   const audio = document.getElementById('remote-audio');
+   audio.srcObject = remoteStream;
+   statusDisplay.innerText = "കോൾ നടക്കുന്നു... (Connected)";
+  });
 
-    // കോൾ കണക്ഷൻ ഹാൻഡിൽ ചെയ്യുന്നു
-    function handleCall(call) {
-        currentCall = call;
-        document.getElementById('btn-call').style.display = 'none';
-        document.getElementById('btn-hangup').style.display = 'block';
+  call.on('close', () => {
+   endCallUI();
+  });
+ }
 
-        call.on('stream', (remoteStream) => {
-            document.getElementById('remote-audio').srcObject = remoteStream;
-            statusMsg.innerText = "സംസാരിക്കാം (Connected)";
-        });
+ // 4. കോൾ അവസാനിപ്പിക്കാൻ
+ function hangUp() {
+  if (currentCall) currentCall.close();
+  endCallUI();
+ }
 
-        call.on('close', () => { resetUI(); });
-    }
-
-    // കോൾ കട്ട് ചെയ്യാൻ
-    function hangUp() {
-        if (currentCall) currentCall.close();
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-        }
-        resetUI();
-    }
-
-    function resetUI() {
-        document.getElementById('btn-call').style.display = 'block';
-        document.getElementById('btn-hangup').style.display = 'none';
-        statusMsg.innerText = "കോൾ അവസാനിച്ചു.";
-    }
-
-    // ലോഗ് ഔട്ട് ചെയ്യാൻ
-    function logout() {
-        localStorage.removeItem('saved_peer_id');
-        location.reload();
-    }
+ function endCallUI() {
+  btnCall.style.display = 'block';
+  btnHangup.style.display = 'none';
+  statusDisplay.innerText = "കോൾ അവസാനിച്ചു.";
+ }
 </script>
 
 </body>
